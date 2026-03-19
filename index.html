@@ -4,6 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>StoreSync POS</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#4f46e5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="StoreSync">
+<meta name="description" content="Aplikasi POS modern untuk manajemen toko Anda">
+<meta name="mobile-web-app-capable" content="yes">
+
+<!-- PWA Icons -->
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 /* =================== BOLD LIGHT THEME =================== */
@@ -593,6 +607,7 @@ tr:hover td{background:var(--accent-l)}
     <div class="logo"><div class="logo-mark">🏪</div>StoreSync POS</div>
     <div style="display:flex;align-items:center;gap:10px">
       <div class="live-badge">LIVE</div>
+      <button id="pwa-install-btn" onclick="installPWA()" style="display:none;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;background:var(--accent-l);color:var(--accent);border:1.5px solid var(--accent);font-size:12px;font-weight:700;cursor:pointer;transition:all .18s" title="Install Aplikasi">⬇ Install</button>
       <div id="clock-box"><div id="clock">—</div><div>Kasir: <span id="kasir-name">—</span></div></div><button class="header-logout" id="logout-btn" onclick="logoutUser()" style="display:none">↩ Keluar</button>
     </div>
   </div>
@@ -2120,6 +2135,42 @@ document.addEventListener('DOMContentLoaded', function() {
 
 /* INIT */
 focusScanInput('in');
+
+/* ============================================================
+   SERVICE WORKER REGISTRATION
+   ============================================================ */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(reg => console.log('✅ SW registered:', reg.scope))
+      .catch(err => console.log('❌ SW error:', err));
+  });
+}
+
+/* PWA Install Prompt */
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const installBtn = document.getElementById('pwa-install-btn');
+  if (installBtn) installBtn.style.display = 'flex';
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredPrompt = null;
+  const installBtn = document.getElementById('pwa-install-btn');
+  if (installBtn) installBtn.style.display = 'none';
+  toast('✅ StoreSync berhasil dipasang!', 'success');
+});
+
+function installPWA() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(choice => {
+    if (choice.outcome === 'accepted') toast('🎉 Menginstall StoreSync...', 'success');
+    deferredPrompt = null;
+  });
+}
 </script>
 </body>
 </html>
